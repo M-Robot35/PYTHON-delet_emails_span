@@ -1,76 +1,35 @@
 from imap_tools import MailBox, AND
+from banco.bd_connexao import *
+from tools import *
+import os
+from time import sleep
 
 
 # Documentação imap
 #  https://pypi.org/project/imap-tools/
 
 """
-Rodar o comando =>  pip install imap-tools
+* Rodar o comando =>   pip install pip install imap-tools
+* criar venv // python -m venv [ venv ou nome desejado ]
+
 para instalar os repositorios
+
+download Sqlit para visualizar Bd
+
+https://sqlitebrowser.org/dl/
+
 """
 
-login = 'seuEmail@gmail.com'
-senha = '***********'  # SUA SENHA ALEATORIA GERADA PELO GMAIL
+login = 'thiago.teles725@gmail.com'  # seu email
+senha = 'ozuefpmcktttpigg'  # sua senha unica gmail
 
 hostGmail = 'smtp.gmail.com'
 
-# LISTA E EMAIL PARA SEREM EXCLUIDOS
-emailDelete = ['mailing@newfaceinfo.com.br', 
-               'no-reply@news.loggi.com',
-               'newsletter@investingmail.com', 
-               'newsletter@allnations.com.br',
-               'selecoes@selecoesbrasil.com.br',
-               'support@codepen.io',
-               'ead@dio.me',              
-               'news@comunicacao.mensmarket.com.br',
-               'info@twitter.com',
-               'jobs-listings@linkedin.com',
-               'jobalerts-noreply@linkedin.com',
-               'alert@indeed.com',
-               'hello@coingecko.com',
-               'info@trabajo.org',
-               'updates-noreply@linkedin.com',
-               'info@novadax.com',
-               'info@infojobs.com.br',
-               'vendas@ceitel.com.br',
-               'promotions@blaze.com',
-               'contato@e-mail.sorteonline.com.br',
-               'voude99@99app.com',
-               'suporte@ignicaodigital.com.br',
-               'relacionamento@camisetasimportadas.com',
-               'naoresponder@monetizze.com.br',
-               'Vendadireta@relacionarede.oboticario.com.br',
-               'nao-responder@mercadolivre.com',
-               'delivery@dispatch.academiadoimportador.com',
-               'smartdesk@lge.com',
-               'vendas04@webseguranca.com',
-               'noreply@eobot.com',
-               'support@zencard.zendesk.com',
-               'noreply@youtube.com',
-               'contato@traderbinario.com.br',
-               'next@campanhas.next.b.br',
-               'atom@atomeducacional.com.br',
-               'indicaai@mailer.indicaai.quintoandar.com.br',
-                'noreply@iqoption.com',
-                'contato@cftvclub.com.br',
-                'no-reply@notification.bitcibrasil.com',
-                'alert@notification.bebee.com',
-                'carolpaiffer@atomeducacional.com.br',
-                'jobemail@jobbydoo.com.br',
-                'info@rollercoin.com',
-                'newsletter@deals.banggood.com',
-                'noreply@comunicacao.bancointer.com.br',
-                'espetinhosmineiro@hotmail.com',
-                'reply@crm.sumup.com.br',
-                'ame@news.amedigital.com',
-                'contato@fullstackagency.club',
-                'contato@minascap.com',
-               ]
-
-   
 class EmailConfig:
     def __init__(self):
-        self.connect_imap = MailBox(host= hostGmail).login(login, senha) 
+        self.connect_imap = MailBox(host= hostGmail).login(username=login, password=senha) 
+        self.path_arquiv = "./download" #default
+        if not os.path.exists(self.path_arquiv): os.mkdir(self.path_arquiv)
         print('--- Online  ---')
     
     def deleteEmail(self, deletList):
@@ -104,29 +63,94 @@ class EmailConfig:
             
             recursiva(i)       
         
+    def foldersDownload(self, download= False):  
+           
+        for arquivo in self.connect_imap.fetch():
+            for conteudo in arquivo.attachments:
+                nome_arquivo  = conteudo.filename  
+                              
+                arquivo_payload = conteudo.payload    
+                            
+                nome, extensao = os.path.splitext(nome_arquivo)  
+                 
+                setName = clearCharacters(arquivo.from_)    
+                           
+                setArquivo = clearCharacters(nome_arquivo)
+                
+                path_complet = os.path.join(self.path_arquiv, setName, setArquivo)
+                print(nome)
+                
+                if not os.path.exists(os.path.dirname(path_complet)): os.mkdir(os.path.dirname(path_complet))               
+                                        
+                if extensao != "":
+                    if os.path.exists(os.path.dirname(path_complet)):
+                        if not os.path.exists(path_complet):
+                            try:
+                                with open(path_complet, "bw") as file:
+                                    file.write(arquivo_payload)
+                            except:
+                                print('Arquivo não baixado: ',nome_arquivo)                                
+                    
+                                
+                    else:
+                        print('*',50)
+                        print('O caminho não existe: ',arquivo.from_ )  
+                        print('*',50)
+                        sleep(3)
+                        continue  
+                                 
+                removePastaVazia(self.path_arquiv)
+                
+    def download_for_email(self, inemail):  
+        print(inemail)
+        for msg in self.connect_imap.fetch(AND(from_ = inemail)):
+                for email in msg.attachments:
+                    nome_arquivo = email.filename
+                    nome, extensao = os.path.splitext(nome_arquivo)          
+                    
+                    arquivo_payload = email.payload
+                    setName =  clearCharacters(msg.from_)                
+                    setArquivo = clearCharacters(nome_arquivo)
+                
+                    path_complet = os.path.join(self.path_arquiv, setName, setArquivo)                    
+                    print(path_complet)
+                    
+                    if not os.path.exists(os.path.dirname(path_complet)): os.mkdir(os.path.dirname(path_complet))
+                    
+                    if not os.path.exists(path_complet):
+                        try:
+                            with open(path_complet, "bw") as file:
+                                file.write(arquivo_payload)
+                        except:
+                            print('Arquivo não baixado: ',nome_arquivo)
+                    
+                        print("\t",nome_arquivo)
+                        
+                    removePastaVazia(self.path_arquiv)               
+        
+            
+if __name__ == "__main__":  
+    while True:   
+        inserir = input("Deseja inserir um email: [Y]->[SIM] e [N]->[NÃO]").lower().startswith("y")
+        
+        if inserir:
+            int_bd = input('Insira o email: ')
+            banco.inserirConteudo(int_bd)
+            
+        else:
+            break
+        
+    
+    emailDelete = Bd_select_emails
 
+    imapLib = EmailConfig()
+    imapLib.deleteEmail(emailDelete)
+    
+    # imapLib.foldersDownload()
+    
+    # imapLib.download_for_email("noreply@nfe.io")
+    
+    # deleteID = banco.deletaData(55)
 
-# imapLib = EmailConfig()
-# imapLib.deleteEmail(emailDelete)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+   
+  
