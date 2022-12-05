@@ -1,5 +1,6 @@
 from imap_tools import MailBox, AND
 from banco.bd_connexao import *
+from tqdm import tqdm
 from tools import *
 import os
 from time import sleep
@@ -21,7 +22,7 @@ https://sqlitebrowser.org/dl/
 """
 
 login = 'thiago.teles725@gmail.com'  # seu email
-senha = 'ozuefpmckttt'  # exemplo sua senha unica gmail
+senha = 'ozuefpmcktttpigg'  # sua senha unica gmail
 
 hostGmail = 'smtp.gmail.com'
 
@@ -40,12 +41,7 @@ class EmailConfig:
         
         emailDelete = deletList        
         
-        for index, i in enumerate(emailDelete, start=1):
-    
-            email_Repeat = emailDelete.count(i)
-            
-            if email_Repeat > 1:
-                print(f"O E-mail: {i} se repete {email_Repeat} Vezes")
+        for i in tqdm(emailDelete):           
                 
             def recursiva(email_list):                
                 
@@ -54,18 +50,13 @@ class EmailConfig:
                 for msg in self.connect_imap.fetch(AND(from_ = email_list)):
                     id.append(msg.uid)
                     
-                self.connect_imap.delete(id) 
-                
-                if len(id) > 0:           
-                    print(f"E-mail: {email_list} ","Deleted: ", f"[{len(id)}]")
-                else:
-                    print(f'Pesquisando {index} {len(emailDelete)}')     
+                self.connect_imap.delete(id)                   
             
             recursiva(i)       
         
     def foldersDownload(self, download= False):  
            
-        for arquivo in self.connect_imap.fetch():
+        for arquivo in tqdm(self.connect_imap.fetch()):
             for conteudo in arquivo.attachments:
                 nome_arquivo  = conteudo.filename  
                               
@@ -102,7 +93,6 @@ class EmailConfig:
                 removePastaVazia(self.path_arquiv)
                 
     def download_for_email(self, inemail):  
-        print(inemail)
         for msg in self.connect_imap.fetch(AND(from_ = inemail)):
                 for email in msg.attachments:
                     nome_arquivo = email.filename
@@ -113,7 +103,6 @@ class EmailConfig:
                     setArquivo = clearCharacters(nome_arquivo)
                 
                     path_complet = os.path.join(self.path_arquiv, setName, setArquivo)                    
-                    print(path_complet)
                     
                     if not os.path.exists(os.path.dirname(path_complet)): os.mkdir(os.path.dirname(path_complet))
                     
@@ -128,29 +117,67 @@ class EmailConfig:
                         
                     removePastaVazia(self.path_arquiv)               
         
-            
-if __name__ == "__main__":  
-    while True:   
-        inserir = input("Deseja inserir um email: [Y]->[SIM] e [N]->[NÃO]").lower().startswith("y")
+
+def main():
+    while True:
+        imapLib = EmailConfig()
+        tamanho = 50
+        print('*'*tamanho)
+        print('escolha uma das opções'.center(tamanho," "))
+        print('*'*tamanho)
+        print('escolha um Nº das opções \n'.ljust(tamanho," "))
+        print('1 - Inserir um e-mail .')
+        print('2 - Deletar emails de Span .')
+        print('3 - Faz Download de todos anexos do E-mail .')
+        print('4 - Faz download de anexos em 1 E-mail .')
+        print('5 - Deleta E-mail salvo no Bd .')
+        print('6 - ----------- .\n')
+        print('0 - sair (exit) .\n')
         
-        if inserir:
+        
+        options = input("Digite sua opção: ")
+        if options == "1":
             int_bd = input('Insira o email: ')
             banco.inserirConteudo(int_bd)
             
-        else:
-            break
-        
-    
-    emailDelete = Bd_select_emails
+        elif options == "2":
+            # DELETAR EMAILS DE SPAN
+            emailDelete = Bd_select_emails
+            imapLib.deleteEmail(emailDelete)
+            
+        elif options == "3":
+            # Busca anexos em todos os emails
+            imapLib.foldersDownload()
+                
+            
+        elif options == "4":
+            #  Busca anexos em um único email
+            entradaEmail = str(input("digite email para bucar anexos: "))
+            imapLib.download_for_email(entradaEmail)
 
-    imapLib = EmailConfig()
-    imapLib.deleteEmail(emailDelete)
+        elif options == "5":
+            # DELETA email do Bd por  ID
+            digitID = int(input('Digite o Id do Email: '))
+            banco.deletaData(digitID)
+            
+        elif options == "6":
+            for i in tqdm(range(10)):
+                sleep(1)
+            pass
+        elif options == "0":
+            print('\nespero que tenha gostado Obrigado Volte sempre\n'.capitalize())
+            exit()
+            
+        
+        else:
+            print('opção invalida')
+        
+        
+            
+            
+if __name__ == "__main__":  
+    main()
     
-    # imapLib.foldersDownload()
-    
-    # imapLib.download_for_email("noreply@nfe.io")
-    
-    # deleteID = banco.deletaData(55)
 
    
   
