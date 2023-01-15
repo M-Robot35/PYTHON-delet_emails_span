@@ -22,7 +22,7 @@ https://sqlitebrowser.org/dl/
 """
 
 login = 'thiago.teles725@gmail.com'  # seu email
-senha = 'ozuefpmcktttp'  # sua senha unica gmail
+senha = 'bzbojshrctcyfjni'  # sua senha unica gmail
 
 hostGmail = 'smtp.gmail.com'
 
